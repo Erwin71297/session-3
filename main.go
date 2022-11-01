@@ -24,22 +24,54 @@ var global *[]Person
 
 func Get(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
-	json.NewEncoder(rw).Encode(global)
+	if global == nil || len(*global) == 0 {
+		result := map[string]interface{}{
+			"status":  http.StatusOK,
+			"data":    nil,
+			"message": "No Data Available",
+		}
+		json.NewEncoder(rw).Encode(result)
+	} else {
+		result := map[string]interface{}{
+			"status":  http.StatusOK,
+			"data":    global,
+			"message": "Successfully Get Data",
+		}
+		json.NewEncoder(rw).Encode(result)
+	}
+
 }
 
 func Post(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	var (
-		todo  Person
-		todos []Person
+		input       Person
+		todos, data []Person
 	)
 
-	json.NewDecoder(r.Body).Decode(&todo)
-	todos = append(todos, todo)
-	json.NewEncoder(rw).Encode(todo)
-	global = &todos
-	rw.Write([]byte(`{"message": "Successfully Posted Data"}`))
+	json.NewDecoder(r.Body).Decode(&input)
+	if global == nil {
+		input.ID = 1
+		todos = append(todos, input)
+		global = &todos
+		result := map[string]interface{}{
+			"status":  http.StatusOK,
+			"data":    global,
+			"message": "Successfully Posted Data",
+		}
+		json.NewEncoder(rw).Encode(result)
+	} else {
+		data = *global
+		input.ID = len(*global) + 1
+		data = append(data, input)
+		global = &data
+		result := map[string]interface{}{
+			"status":  http.StatusOK,
+			"data":    global,
+			"message": "Successfully Posted Data",
+		}
+		json.NewEncoder(rw).Encode(result)
+	}
 }
 
 func Delete(rw http.ResponseWriter, r *http.Request) {
@@ -54,28 +86,49 @@ func Delete(rw http.ResponseWriter, r *http.Request) {
 		if todo.ID == id {
 			data = append(data[:index], data[index+1:]...)
 			global = &data
-			rw.WriteHeader(http.StatusOK)
-			rw.Write([]byte(`{"message": "Success Deleting data"}`))
+			result := map[string]interface{}{
+				"status":  http.StatusOK,
+				"data":    global,
+				"message": "Successfully Deleted Data",
+			}
+			json.NewEncoder(rw).Encode(result)
 		}
 	}
+
 }
 
 func Update(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	var (
-		dataPerson []Person
-		updateData Person
+		data  []Person
+		input Person
 	)
-	dataPerson = *global
+	data = *global
 
-	json.NewDecoder(r.Body).Decode(&updateData)
-	for index, data := range dataPerson {
-		if data.ID == updateData.ID {
-			dataPerson = append(dataPerson[:index], dataPerson[index+1:]...)
-			dataPerson = append(dataPerson, updateData)
-			global = &dataPerson
+	query := r.URL.Query()
+	id, _ := strconv.Atoi(query.Get("id"))
+
+	if data == nil || len(data) == 0 {
+		result := map[string]interface{}{
+			"status":  http.StatusBadRequest,
+			"data":    global,
+			"message": "Invalid Request",
+		}
+		json.NewEncoder(rw).Encode(result)
+	}
+
+	json.NewDecoder(r.Body).Decode(&input)
+	for index, curData := range data {
+		if curData.ID == id {
+			data[index].FirstName = input.FirstName
+			data[index].LastName = input.LastName
+			global = &data
+			result := map[string]interface{}{
+				"status":  http.StatusOK,
+				"data":    global,
+				"message": "Successfully Updated Data",
+			}
+			json.NewEncoder(rw).Encode(result)
 		}
 	}
-	json.NewEncoder(rw).Encode(global)
-	rw.Write([]byte(`{"message": "Successfully Updated Data"}`))
 }
