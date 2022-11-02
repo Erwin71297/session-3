@@ -1,13 +1,13 @@
 package main
 
 import (
+	"assignment/docs"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/swag/example/basic/docs"
 )
 
 func main() {
@@ -16,13 +16,19 @@ func main() {
 	// docs.SwaggerInfo.Host = "8080"
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
-	r.GET("/get", Get)
-	r.POST("/post", Post)
-	r.POST("/delete", Delete)
-	r.POST("/update", Update)
+	v1 := r.Group("/api/v1")
+	{
+		person := v1.Group("/person")
+		{
+			person.GET("/get", Get)
+			person.POST("/post", Post)
+			person.POST("/delete", Delete)
+			person.POST("/update", Update)
+		}
+	}
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.Run("")
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://localhost:4000/swagger/doc.json")))
+	r.Run(":4000")
 }
 
 type Person struct {
