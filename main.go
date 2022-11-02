@@ -1,17 +1,28 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag/example/basic/docs"
 )
 
 func main() {
-	http.HandleFunc("/get", Get)
-	http.HandleFunc("/post", Post)
-	http.HandleFunc("/delete", Delete)
-	http.HandleFunc("/update", Update)
-	http.ListenAndServe(":8000", nil)
+	r := gin.Default()
+	// swagger configuration
+	// docs.SwaggerInfo.Host = "8080"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	r.GET("/get", Get)
+	r.POST("/post", Post)
+	r.POST("/delete", Delete)
+	r.POST("/update", Update)
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.Run("")
 }
 
 type Person struct {
@@ -22,34 +33,51 @@ type Person struct {
 
 var global *[]Person
 
-func Get(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
+// @BasePath /api/v1
+// Get godoc
+// @Summary get
+// @Schemes
+// @Description Get
+// @Tags person
+// @Accept json
+// @Produce json
+// @Router /person [get]
+func Get(c *gin.Context) {
 	if global == nil || len(*global) == 0 {
 		result := map[string]interface{}{
 			"status":  http.StatusOK,
 			"data":    nil,
 			"message": "No Data Available",
 		}
-		json.NewEncoder(rw).Encode(result)
+		c.JSON(http.StatusOK, result)
 	} else {
 		result := map[string]interface{}{
 			"status":  http.StatusOK,
 			"data":    global,
 			"message": "Successfully Get Data",
 		}
-		json.NewEncoder(rw).Encode(result)
+		c.JSON(http.StatusOK, result)
 	}
 
 }
 
-func Post(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
+// @BasePath /api/v1
+// Post godoc
+// @Summary Post
+// @Schemes
+// @Description Post
+// @Tags person
+// @Accept json
+// @Produce json
+// @Param   Body body   Person  true  "payload"
+// @Router /person [post]
+func Post(c *gin.Context) {
 	var (
 		input       Person
 		todos, data []Person
 	)
 
-	json.NewDecoder(r.Body).Decode(&input)
+	c.BindJSON(&input)
 	if global == nil {
 		input.ID = 1
 		todos = append(todos, input)
@@ -59,7 +87,7 @@ func Post(rw http.ResponseWriter, r *http.Request) {
 			"data":    global,
 			"message": "Successfully Posted Data",
 		}
-		json.NewEncoder(rw).Encode(result)
+		c.JSON(http.StatusOK, result)
 	} else {
 		data = *global
 		input.ID = len(*global) + 1
@@ -70,17 +98,26 @@ func Post(rw http.ResponseWriter, r *http.Request) {
 			"data":    global,
 			"message": "Successfully Posted Data",
 		}
-		json.NewEncoder(rw).Encode(result)
+		c.JSON(http.StatusOK, result)
 	}
 }
 
-func Delete(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
+// @BasePath /api/v1
+// Delete godoc
+// @Summary delete
+// @Schemes
+// @Description Delete
+// @Tags person
+// @Accept json
+// @Produce json
+// @Param   id  query   string  true  "id"
+// @Param   Body body   Person  true  "payload"
+// @Router /person/:id [delete]
+func Delete(c *gin.Context) {
 	var data []Person
 	data = *global
 
-	query := r.URL.Query()
-	id, _ := strconv.Atoi(query.Get("id"))
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	for index, todo := range data {
 		if todo.ID == id {
@@ -91,22 +128,31 @@ func Delete(rw http.ResponseWriter, r *http.Request) {
 				"data":    global,
 				"message": "Successfully Deleted Data",
 			}
-			json.NewEncoder(rw).Encode(result)
+			c.JSON(http.StatusOK, result)
 		}
 	}
 
 }
 
-func Update(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
+// @BasePath /api/v1
+// Update godoc
+// @Summary update
+// @Schemes
+// @Description Update
+// @Tags person
+// @Accept json
+// @Produce json
+// @Param   id  query   string  true  "id"
+// @Param   Body body   Person  true  "payload"
+// @Router /person/:id [put]
+func Update(c *gin.Context) {
 	var (
 		data  []Person
 		input Person
 	)
 	data = *global
 
-	query := r.URL.Query()
-	id, _ := strconv.Atoi(query.Get("id"))
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	if data == nil || len(data) == 0 {
 		result := map[string]interface{}{
@@ -114,10 +160,10 @@ func Update(rw http.ResponseWriter, r *http.Request) {
 			"data":    global,
 			"message": "Invalid Request",
 		}
-		json.NewEncoder(rw).Encode(result)
+		c.JSON(http.StatusOK, result)
 	}
 
-	json.NewDecoder(r.Body).Decode(&input)
+	c.BindJSON(&input)
 	for index, curData := range data {
 		if curData.ID == id {
 			data[index].FirstName = input.FirstName
@@ -128,7 +174,7 @@ func Update(rw http.ResponseWriter, r *http.Request) {
 				"data":    global,
 				"message": "Successfully Updated Data",
 			}
-			json.NewEncoder(rw).Encode(result)
+			c.JSON(http.StatusOK, result)
 		}
 	}
 }

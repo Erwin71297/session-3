@@ -1,0 +1,87 @@
+definitions:
+  main.Person:
+    properties:
+      firstName:
+        type: string
+      id:
+        type: integer
+      lastName:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /person:
+    get:
+      consumes:
+      - application/json
+      description: Get
+      produces:
+      - application/json
+      responses: {}
+      summary: get
+      tags:
+      - person
+    post:
+      consumes:
+      - application/json
+      description: Post
+      parameters:
+      - description: payload
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/main.Person'
+      produces:
+      - application/json
+      responses: {}
+      summary: Post
+      tags:
+      - person
+  /person/:id:
+    delete:
+      consumes:
+      - application/json
+      description: Delete
+      parameters:
+      - description: id
+        in: query
+        name: id
+        required: true
+        type: string
+      - description: payload
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/main.Person'
+      produces:
+      - application/json
+      responses: {}
+      summary: delete
+      tags:
+      - person
+    put:
+      consumes:
+      - application/json
+      description: Update
+      parameters:
+      - description: id
+        in: query
+        name: id
+        required: true
+        type: string
+      - description: payload
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/main.Person'
+      produces:
+      - application/json
+      responses: {}
+      summary: update
+      tags:
+      - person
+swagger: "2.0"
